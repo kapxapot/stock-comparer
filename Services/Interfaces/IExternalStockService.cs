@@ -6,6 +6,6 @@ namespace StockComparer.Services.Interfaces
 {
     public interface IExternalStockService
     {
-        Task<IReadOnlyCollection<DailyStockData>> GetDailyStockData(string symbol);
+        Task<IEnumerable<DailyStockData>> GetDailyStockData(string symbol);
     }
 }

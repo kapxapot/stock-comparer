@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
+using StockComparer.Extensions;
 using StockComparer.Models;
 using StockComparer.Services.Interfaces;
 
@@ -19,7 +19,7 @@ namespace StockComparer.Services
             _apiKey = apiKey;
         }
 
-        public async Task<IReadOnlyCollection<DailyStockData>> GetDailyStockData(string symbol)
+        public async Task<IEnumerable<DailyStockData>> GetDailyStockData(string symbol)
         {
             var client = new HttpClient();
 
@@ -47,7 +47,7 @@ namespace StockComparer.Services
                         DateTimeStyles.None,
                         out var date))
                     {
-                        throw new Exception();
+                        throw new Exception($"Incorrect date: {series.Name}");
                     }
 
                     var values = series.Value;
@@ -58,21 +58,21 @@ namespace StockComparer.Services
                     values.TryGetProperty("4. close", out var close);
                     values.TryGetProperty("5. volume", out var volume);
 
-
                     list.Add(
                         new DailyStockData
                         {
                             Symbol = symbol,
-                            Open = open.GetDecimal(),
-                            High = high.GetDecimal(),
-                            Low = low.GetDecimal(),
-                            Close = close.GetDecimal(),
-                            Volume = volume.GetInt32()
+                            Date = date,
+                            Open = open.ToDecimal(),
+                            High = high.ToDecimal(),
+                            Low = low.ToDecimal(),
+                            Close = close.ToDecimal(),
+                            Volume = volume.ToInt()
                         }
                     );
                 }
 
-                return list.AsReadOnly();
+                return list;
             }
         }
 
