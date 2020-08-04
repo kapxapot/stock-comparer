@@ -1,9 +1,11 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using StockComparer.Data;
 using StockComparer.Models;
+using StockComparer.Services.Interfaces;
 
 namespace StockComparer.Controllers
 {
@@ -12,10 +14,12 @@ namespace StockComparer.Controllers
     public class DailyController : ControllerBase
     {
         private readonly StockContext _context;
+        private readonly IExternalStockService _externalStockService;
 
-        public DailyController(StockContext context)
+        public DailyController(StockContext context, IExternalStockService externalStockService)
         {
             _context = context;
+            _externalStockService = externalStockService;
         }
 
         // GET: api/Daily/IBM
@@ -27,7 +31,9 @@ namespace StockComparer.Controllers
                 return BadRequest();
             }
 
-            return await _context.DailyStockData.ToListAsync();
+            var data = await _externalStockService.GetDailyStockData(symbol);
+
+            return data.ToList();
         }
     }
 }

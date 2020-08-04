@@ -5,6 +5,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using StockComparer.Data;
+using StockComparer.Services;
+using StockComparer.Services.Interfaces;
 
 namespace StockComparer
 {
@@ -21,7 +23,13 @@ namespace StockComparer
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddDbContext<StockContext>(opt =>
-               opt.UseInMemoryDatabase("StockComparer"));
+                opt.UseInMemoryDatabase("StockComparer"));
+
+            services.AddSingleton<IExternalStockService>(
+                new ExternalStockService(
+                    Configuration.GetValue<string>("AlphaVantageApiKey")
+                )
+            );
 
             services.AddControllers();
         }
