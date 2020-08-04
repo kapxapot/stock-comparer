@@ -1,4 +1,5 @@
 using System.Linq;
+using Microsoft.Extensions.Configuration;
 using StockComparer.Services;
 using Xunit;
 
@@ -6,12 +7,22 @@ namespace StockComparer.Tests
 {
     public class ExternalStockServiceTest
     {
+        public IConfigurationRoot GetConfigurationRoot()
+        {
+            return new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json", optional: true)
+                .AddEnvironmentVariables()
+                .Build();
+        }
+
         [Theory]
         [InlineData("GOOGL")]
         [InlineData("IBM")]
+        [InlineData("SPY")]
         public async void SuccessfulLoadDailyTest(string symbol)
         {
-            var apiKey = "NGCJ7PPUPB8W7FII";
+            var config = GetConfigurationRoot();
+            var apiKey = config.GetValue<string>("AlphaVantageApiKey");
 
             var service = new ExternalStockService(apiKey);
 
