@@ -54,5 +54,8 @@ namespace StockComparer.Extensions
 
             throw new Exception("Invalid element type, number or string expected.");
         }
+
+        public static bool HasProperty(this JsonElement element, string propertyName) =>
+            element.TryGetProperty(propertyName, out var _);
     }
 }

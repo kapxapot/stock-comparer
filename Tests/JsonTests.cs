@@ -4,7 +4,7 @@ using Xunit;
 
 namespace StockComparer.Tests
 {
-    public class JsonTest
+    public class JsonTests
     {
         [Fact]
         public void TryGetPropertyTest()

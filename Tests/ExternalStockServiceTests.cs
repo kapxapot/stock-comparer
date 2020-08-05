@@ -1,19 +1,44 @@
 using System;
 using System.Linq;
+using System.Net.Http;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using StockComparer.Config;
 using StockComparer.Services;
 using Xunit;
 
 namespace StockComparer.Tests
 {
-    public class ExternalStockServiceTest
+    public class ExternalStockServiceTests : IDisposable
     {
-        public IConfigurationRoot GetConfigurationRoot()
+        private readonly HttpClient _httpClient;
+        private readonly ApiConfig _apiConfig;
+        private readonly ILogger<ExternalStockService> _logger;
+
+        public ExternalStockServiceTests()
         {
-            return new ConfigurationBuilder()
+            _httpClient = new HttpClient();
+
+            var configRoot = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json", optional: true)
                 .AddEnvironmentVariables()
                 .Build();
+
+            _apiConfig = configRoot.Get<ApiConfig>();
+
+            var serviceProvider = new ServiceCollection()
+                .AddLogging()
+                .BuildServiceProvider();
+
+            var factory = serviceProvider.GetService<ILoggerFactory>();
+
+            _logger = factory.CreateLogger<ExternalStockService>();
+        }
+
+        public void Dispose()
+        {
+            _httpClient.Dispose();
         }
 
         [Theory]
@@ -27,13 +52,16 @@ namespace StockComparer.Tests
         /// </summary>
         public async void SuccessfulLoadDailyTest(string apiKey, string symbol)
         {
-            if (string.IsNullOrWhiteSpace(apiKey))
+            var apiConfig = new ApiConfig
             {
-                var config = GetConfigurationRoot();
-                apiKey = config.GetValue<string>("AlphaVantageApiKey");
-            }
+                AlphaVantageApiKey = string.IsNullOrWhiteSpace(apiKey)
+                    ? _apiConfig.AlphaVantageApiKey
+                    : apiKey,
+                MaxRetries = _apiConfig.MaxRetries,
+                InitialDelay = _apiConfig.InitialDelay
+            };
 
-            var service = new ExternalStockService(apiKey);
+            var service = new ExternalStockService(_httpClient, apiConfig, _logger);
 
             var result = await service.GetDailyStockData(symbol);
 
@@ -59,13 +87,16 @@ namespace StockComparer.Tests
         /// </summary>
         public async void FailedLoadDailyTest(string apiKey, string symbol)
         {
-            if (string.IsNullOrWhiteSpace(apiKey))
+            var apiConfig = new ApiConfig
             {
-                var config = GetConfigurationRoot();
-                apiKey = config.GetValue<string>("AlphaVantageApiKey");
-            }
+                AlphaVantageApiKey = string.IsNullOrWhiteSpace(apiKey)
+                    ? _apiConfig.AlphaVantageApiKey
+                    : apiKey,
+                MaxRetries = 1,
+                InitialDelay = 0
+            };
 
-            var service = new ExternalStockService(apiKey);
+            var service = new ExternalStockService(_httpClient, apiConfig, _logger);
 
             await Assert.ThrowsAsync<Exception>(
                 async () => await service.GetDailyStockData(symbol)
