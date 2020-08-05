@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -31,9 +32,15 @@ namespace StockComparer.Controllers
                 return BadRequest();
             }
 
-            var data = await _externalStockService.GetDailyStockData(symbol);
-
-            return data.ToList();
+            try
+            {
+                var data = await _externalStockService.GetDailyStockData(symbol);
+                return data.ToList();
+            }
+            catch (Exception ex)
+            {
+                return Problem($"Error reading external stock data: {ex.Message}");
+            }
         }
     }
 }
