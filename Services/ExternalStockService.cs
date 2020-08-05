@@ -88,7 +88,12 @@ namespace StockComparer.Services
                 return error.GetString();
             }
 
-            return "Critical API error.";
+            if (root.TryGetProperty("Note", out var note))
+            {
+                return note.GetString();
+            }
+
+            return $"Critical API error: {root.ToString()}";
         }
     }
 }

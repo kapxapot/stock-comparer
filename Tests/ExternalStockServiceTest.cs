@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using Microsoft.Extensions.Configuration;
 using StockComparer.Services;
@@ -16,13 +17,21 @@ namespace StockComparer.Tests
         }
 
         [Theory]
-        [InlineData("GOOGL")]
-        [InlineData("IBM")]
-        [InlineData("SPY")]
-        public async void SuccessfulLoadDailyTest(string symbol)
+        [InlineData("demo", "IBM")]
+        [InlineData("i am not an api key", "SPY")]
+        [InlineData("", "IBM")]
+        [InlineData("", "GOOGL")]
+        [InlineData("", "SPY")]
+        /// <summary>
+        /// In case of empty apiKey parameter the API key is retrieved from the config.
+        /// </summary>
+        public async void SuccessfulLoadDailyTest(string apiKey, string symbol)
         {
-            var config = GetConfigurationRoot();
-            var apiKey = config.GetValue<string>("AlphaVantageApiKey");
+            if (string.IsNullOrWhiteSpace(apiKey))
+            {
+                var config = GetConfigurationRoot();
+                apiKey = config.GetValue<string>("AlphaVantageApiKey");
+            }
 
             var service = new ExternalStockService(apiKey);
 
@@ -39,6 +48,28 @@ namespace StockComparer.Tests
             Assert.True(first.Low > 0);
             Assert.True(first.Close > 0);
             Assert.True(first.Volume > 0);
+        }
+
+        [Theory]
+        [InlineData("demo", "invalid symbol")]
+        [InlineData("i am not an api key", "invalid symbol")]
+        [InlineData("", "invalid symbol")]
+        /// <summary>
+        /// In case of empty apiKey parameter the API key is retrieved from the config.
+        /// </summary>
+        public async void FailedLoadDailyTest(string apiKey, string symbol)
+        {
+            if (string.IsNullOrWhiteSpace(apiKey))
+            {
+                var config = GetConfigurationRoot();
+                apiKey = config.GetValue<string>("AlphaVantageApiKey");
+            }
+
+            var service = new ExternalStockService(apiKey);
+
+            await Assert.ThrowsAsync<Exception>(
+                async () => await service.GetDailyStockData(symbol)
+            );
         }
     }
 }
