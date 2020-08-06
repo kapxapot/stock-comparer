@@ -32,6 +32,8 @@ namespace StockComparer
 
             services.AddHttpClient<IExternalStockService, ExternalStockService>();
 
+            services.AddScoped<IStockDataService, StockDataService>();
+
             services.AddControllers();
         }
 

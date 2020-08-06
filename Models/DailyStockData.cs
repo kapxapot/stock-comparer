@@ -1,8 +1,9 @@
 using System;
+using StockComparer.Models.Interfaces;
 
 namespace StockComparer.Models
 {
-    public class DailyStockData
+    public class DailyStockData : IDated
     {
         public long Id { get; set; }
         public string Symbol { get; set; }

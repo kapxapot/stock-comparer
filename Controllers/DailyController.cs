@@ -1,10 +1,7 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using StockComparer.Data;
 using StockComparer.Models;
 using StockComparer.Services.Interfaces;
 
@@ -14,13 +11,11 @@ namespace StockComparer.Controllers
     [ApiController]
     public class DailyController : ControllerBase
     {
-        private readonly StockContext _context;
-        private readonly IExternalStockService _externalStockService;
+        private readonly IStockDataService _stockDataService;
 
-        public DailyController(StockContext context, IExternalStockService externalStockService)
+        public DailyController(IStockDataService stockDataService)
         {
-            _context = context;
-            _externalStockService = externalStockService;
+            _stockDataService = stockDataService;
         }
 
         // GET: api/Daily/IBM
@@ -32,15 +27,14 @@ namespace StockComparer.Controllers
                 return BadRequest();
             }
 
-            try
+            var data = (await _stockDataService.GetLastWeekDailyStockData(symbol)).ToList();
+
+            if (data.Any())
             {
-                var data = await _externalStockService.GetDailyStockData(symbol);
-                return data.ToList();
+                return data;
             }
-            catch (Exception ex)
-            {
-                return Problem($"Error reading external stock data: {ex.Message}");
-            }
+
+            return NotFound();
         }
     }
 }
