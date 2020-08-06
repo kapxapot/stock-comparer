@@ -71,8 +71,8 @@ namespace StockComparer.Models
 
             foreach (var day in days)
             {
-                day.Delta = day.Value.Delta(firstDay.Value).ToPercent();
-                day.SpyDelta = day.SpyValue.Delta(firstDay.SpyValue).ToPercent();
+                day.Delta = firstDay.Value.Delta(day.Value).ToPercent();
+                day.SpyDelta = firstDay.SpyValue.Delta(day.SpyValue).ToPercent();
             }
         }
 
