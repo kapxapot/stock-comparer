@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using StockComparer.Data;
 using StockComparer.Extensions;
@@ -25,22 +26,71 @@ namespace StockComparer.Services
 
         public async Task<IEnumerable<DailyStockData>> GetLastWeekDailyStockData(string symbol)
         {
-            // plan:
+            var period = Period.LastWeek;
+
             // 1. try get from db
-            // 2. if today data is not available, load from external service and save to db
-            // 3. return last week data
+            var data = await GetFromDb(symbol, period);
+
+            // 2. if last stock day data is not available,
+            // load from external service and save to db
+            var stockDays = period.StockDays;
+
+            if (!stockDays.Any())
+            {
+                throw new Exception("Invalid period: no stock days.");
+            }
+
+            var lastStockDay = stockDays.OrderBy(d => d).Last();
+
+            if (data.Any(d => d.Date == lastStockDay))
+            {
+                _logger.LogInformation($"Fetched {symbol} data from the db.");
+
+                return data;
+            }
 
             try
             {
-                var data = await _externalStockService.GetDailyStockData(symbol);
-                return data.CutLastWeekChunk();
+                data = await _externalStockService.GetDailyStockData(symbol);
+
+                _logger.LogInformation($"Fetched {symbol} data from the external API.");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Failed to retrieve external stock data for {symbol}");
+                throw new AggregateException(
+                    $"Failed to retrieve external stock data for {symbol}.",
+                    ex
+                );
             }
 
-            return Enumerable.Empty<DailyStockData>();
+            await SaveToDb(data);
+
+            // 3. return last week data
+            return data.CutPeriodChunk(period);
+        }
+
+        private async Task<IEnumerable<DailyStockData>> GetFromDb(string symbol, Period period)
+        {
+            return await _context.DailyStockData
+                .Where(d => d.Symbol == symbol && d.Date >= period.Start && d.Date <= period.End)
+                .ToListAsync();
+        }
+
+        private async Task SaveToDb(IEnumerable<DailyStockData> data)
+        {
+            foreach (var datum in data)
+            {
+                if (_context.DailyStockData.Any(
+                    d => d.Symbol == datum.Symbol && d.Date == datum.Date
+                ))
+                {
+                    continue;
+                }
+
+                await _context.DailyStockData.AddAsync(datum);
+            }
+
+            await _context.SaveChangesAsync();
         }
     }
 }

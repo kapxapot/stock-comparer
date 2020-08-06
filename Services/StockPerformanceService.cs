@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using StockComparer.Models;
@@ -17,6 +18,18 @@ namespace StockComparer.Services
         }
 
         public async Task<StockPerformanceData> GetData(string symbol)
+        {
+            try
+            {
+                return await TryGetData(symbol);
+            }
+            catch (Exception ex)
+            {
+                return StockPerformanceData.Invalid(ex.Message);
+            }
+        }
+
+        private async Task<StockPerformanceData> TryGetData(string symbol)
         {
             var stockData = await _stockDataService.GetLastWeekDailyStockData(symbol);
             var spyData = await _stockDataService.GetLastWeekDailyStockData(SpySymbol);
