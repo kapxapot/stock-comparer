@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Stock Comparer</title>
+
+    <script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.13.0/moment-with-locales.min.js"></script>
+
+    <script src="//cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.1/Chart.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/0.5.5/chartjs-plugin-annotation.js"></script>
+</head>
+<body>
+    <h1>Stock Comparer</h1>
+    <form action="javascript:void(0);" method="POST" onsubmit="compare()">
+        <input type="text" id="symbol" placeholder="Stock symbol">
+        <input type="submit" id="the-button" value="Compare to SPY">
+    </form>
+
+    <p id="error" style="color: red; display: none;"></p>
+
+    <p id="loading" style="display: none;">Loading...</p>
+
+    <div id="chart" style="display: none; margin-top: 20px; max-width: 600px;">
+        <canvas id="chart-canvas"></canvas>
+    </div>
+
+    <script src="js/main.js" asp-append-version="true"></script>
+    <script src="js/colors.js"></script>
+</body>
+</html>
