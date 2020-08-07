@@ -130,8 +130,10 @@ function compare() {
                 error.json.then(data => {
                     showError(data.detail);
                 });
+            } else if (error.status) {
+                showError('Failed to load data. Status: ' + error.status + ' ' + error.statusText);
             } else {
-                showError('Failed to load data: ' + error.status + ' ' + error.statusText);
+                showError('Failed to load data: ' + error);
             }
 
             loadingOff();
