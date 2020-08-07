@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using StockComparer.Models;
@@ -24,7 +25,10 @@ namespace StockComparer.Controllers
         {
             if (string.IsNullOrWhiteSpace(symbol))
             {
-                return BadRequest();
+                return Problem(
+                    "No symbol provided.",
+                    statusCode: (int)HttpStatusCode.BadRequest
+                );
             }
 
             var data = await _stockPerformanceService.GetData(symbol);

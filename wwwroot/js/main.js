@@ -83,7 +83,11 @@ function loadingOff() {
 function compare() {
     hideChart();
 
-    const symbol = document.getElementById('symbol').value;
+    let symbol = document.getElementById('symbol').value;
+    
+    if (symbol) {
+        symbol = symbol.trim();
+    }
 
     if (!symbol) {
         showError('Please, enter the stock symbol.');
@@ -94,13 +98,42 @@ function compare() {
     loadingOn();
 
     fetch(uri + symbol)
-        .then(response => response.json())
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            }
+
+            let error = {
+                status: response.status,
+                statusText: response.statusText
+            };
+
+            const contentType = response.headers.get("content-type");
+
+            if (contentType
+                && (contentType.indexOf("application/json") !== -1
+                    || contentType.indexOf("application/problem+json") !== -1)
+            ) {
+                error.json = response.json();
+            } else {
+                error.text = response.text();
+            }
+
+            return Promise.reject(error);
+        })
         .then(data => {
             showChart(symbol, data);
             loadingOff();
         })
         .catch(error => {
-            showError('Failed to load data: ' + error);
+            if (error.json) {
+                error.json.then(data => {
+                    showError(data.detail);
+                });
+            } else {
+                showError('Failed to load data: ' + error.status + ' ' + error.statusText);
+            }
+
             loadingOff();
         });
 }
